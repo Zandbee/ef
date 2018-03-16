@@ -1,5 +1,8 @@
 package com.ef.util;
 
+import com.ef.db.RequestLogRepository;
+import com.ef.model.LogEntry;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -12,13 +15,13 @@ import java.util.stream.Stream;
 public final class LogReader {
 
     private static final Logger LOG = Logger.getLogger(LogReader.class.getName());
-    private static final String DELIMITER = "|";
+    private static final String DELIMITER = "\\|";
 
     private LogReader() {
     }
 
     public static void readFileFromResources(String fileName) {
-        try (Stream<String> lines = Files.lines( // TODO: substitute with a fileName
+        try (Stream<String> lines = Files.lines( // TODO: substitute with a fileName or extract to const
                 Paths.get(ClassLoader.getSystemResource("access.log").toURI()))) {
             lines.forEach(line -> {
                 LOG.info(line);
@@ -29,9 +32,10 @@ public final class LogReader {
                     String requestMethod = trimWithQuotes(parts[2]);
                     Optional<Integer> statusCode = DataValidator.getInt(trim(parts[3]));
                     String userAgent = trimWithQuotes(parts[4]);
-                    if (date.isPresent() && statusCode.isPresent() && DataValidator.isValidStringAll(ip, requestMethod, userAgent)) {
-
-                    }
+                    if (date.isPresent() && statusCode.isPresent() && DataValidator.isValidIp(ip)
+                            && DataValidator.isValidStringAll(requestMethod, userAgent)) {
+                        RequestLogRepository.add(new LogEntry(date.get(), ip, requestMethod, statusCode.get(), userAgent));
+                    } // TODO add batch
                 }
             });
         } catch (IOException | URISyntaxException ex) {

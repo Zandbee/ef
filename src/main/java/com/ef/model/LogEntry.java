@@ -7,17 +7,17 @@ public class LogEntry {
     private LocalDateTime date;
     private String ip;
     private String requestMethod;
-    private int responseCode;
+    private int statusCode;
     private String userAgent;
 
     public LogEntry() {
     }
 
-    public LogEntry(LocalDateTime date, String ip, String requestMethod, int responseCode, String userAgent) {
+    public LogEntry(LocalDateTime date, String ip, String requestMethod, int statusCode, String userAgent) {
         this.date = date;
         this.ip = ip;
         this.requestMethod = requestMethod;
-        this.responseCode = responseCode;
+        this.statusCode = statusCode;
         this.userAgent = userAgent;
     }
 
@@ -48,12 +48,12 @@ public class LogEntry {
         return this;
     }
 
-    public int getResponseCode() {
-        return responseCode;
+    public int getStatusCode() {
+        return statusCode;
     }
 
-    public LogEntry setResponseCode(int responseCode) {
-        this.responseCode = responseCode;
+    public LogEntry setStatusCode(int statusCode) {
+        this.statusCode = statusCode;
         return this;
     }
 
