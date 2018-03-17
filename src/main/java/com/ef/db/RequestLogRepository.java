@@ -23,6 +23,7 @@ public final class RequestLogRepository {
     private static final String COLUMN_USER_AGENT = "user_agent";
 
     private static final String DATE_PATTERN = "yyyy-MM-dd HH:mm:ss";
+    private static final int BATCH_SIZE = 900;
 
     private static final String CREATE_DB_SQL = String.format(
             "create table if not exists %s (" +
@@ -43,34 +44,42 @@ public final class RequestLogRepository {
             COLUMN_IP, TABLE, COLUMN_DATE, COLUMN_IP);
 
     private static final PreparedStatement createDbStatement;
-    private static final PreparedStatement insertStatement;
+    private static final PreparedStatement insertBatchStatement;
     private static final PreparedStatement selectWithThresholdStatement;
 
     static {
-        createDbStatement = DbHelper.getPreparedStatement(CREATE_DB_SQL);
+        createDbStatement = DbHelper.prepareStatement(CREATE_DB_SQL);
         try {
             createDbStatement.execute();
         } catch (SQLException e) {
             e.printStackTrace(); // TODO everywhere
         }
 
-        insertStatement = DbHelper.getPreparedStatement(INSERT_SQL);
+        insertBatchStatement = DbHelper.prepareBatchStatement(INSERT_SQL);
 
-        selectWithThresholdStatement = DbHelper.getPreparedStatement(SELECT_WITH_THRESHOLD_SQL);
+        selectWithThresholdStatement = DbHelper.prepareStatement(SELECT_WITH_THRESHOLD_SQL);
     }
 
     private RequestLogRepository() {
 
     }
 
-    public static void add(LogEntry entry) {
+    public static void add(Batch<LogEntry> entries) {
         try {
-            insertStatement.setTimestamp(1, Timestamp.valueOf(entry.getDate()));
-            insertStatement.setString(2, entry.getIp());
-            insertStatement.setString(3, entry.getRequestMethod());
-            insertStatement.setInt(4, entry.getStatusCode());
-            insertStatement.setString(5, entry.getUserAgent());
-            insertStatement.execute();
+            entries.getEntries().forEach(entry -> {
+                try {
+                    insertBatchStatement.setTimestamp(1, Timestamp.valueOf(entry.getDate()));
+                    insertBatchStatement.setString(2, entry.getIp());
+                    insertBatchStatement.setString(3, entry.getRequestMethod());
+                    insertBatchStatement.setInt(4, entry.getStatusCode());
+                    insertBatchStatement.setString(5, entry.getUserAgent());
+                    insertBatchStatement.addBatch();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            });
+            insertBatchStatement.executeBatch();
+            insertBatchStatement.getConnection().commit();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -84,6 +93,7 @@ public final class RequestLogRepository {
         String interval = duration.getSqlIntervalName();
 
         Set<String> result = new HashSet<>();
+        Batch<String> batch = new Batch<>();
         try {
             selectWithThresholdStatement.setString(1, dateAsString);
             selectWithThresholdStatement.setString(2, interval);
@@ -99,8 +109,13 @@ public final class RequestLogRepository {
             while (resultSet.next()) {
                 String ip = resultSet.getString(COLUMN_IP);
                 result.add(ip);
-                BlockedIpRepository.add(ip, BlockReason.TOO_MANY_REQUESTS);
+                batch.add(ip);
+                if (batch.size() >= BATCH_SIZE) {
+                    BlockedIpRepository.add(batch, BlockReason.TOO_MANY_REQUESTS);
+                    batch.clear();
+                }
             }
+            BlockedIpRepository.add(batch, BlockReason.TOO_MANY_REQUESTS);
         } catch (SQLException e) {
             e.printStackTrace();
         }

@@ -15,17 +15,45 @@ public final class DbHelper {
     private DbHelper() {
     }
 
-    public static PreparedStatement getPreparedStatement(String query) {
+    /**
+     * @see #prepareBatchStatement
+     */
+    public static PreparedStatement prepareStatement(String query) {
         Optional<Connection> conn = DatabaseConfig.getConnection();
         if (conn.isPresent()) {
+            return getPreparedStatement(conn.get(), query);
+        } else {
+            throw new RuntimeException("Failed to get DB connection.");
+        }
+    }
+
+    /**
+     * @return prepared statement with a connection's auto-commit mode
+     * set to false
+     */
+    public static PreparedStatement prepareBatchStatement(String query) {
+        Optional<Connection> conn = DatabaseConfig.getConnection();
+        if (conn.isPresent()) {
+            Connection connection = conn.get(); // TODO close connections, statements
             try {
-                return conn.get().prepareStatement(query);
+                connection.setAutoCommit(false);
+                return getPreparedStatement(connection, query);
             } catch (SQLException ex) {
                 LOG.severe(String.format("Failed to prepare statement: %s. %s", query, ex));
                 throw new RuntimeException("Failed to prepare statement.", ex);
             }
+        } else {
+            throw new RuntimeException("Failed to get DB connection.");
         }
-        throw new RuntimeException("Failed to prepare statement.");
+    }
+
+    private static PreparedStatement getPreparedStatement(Connection conn, String query) {
+        try {
+            return conn.prepareStatement(query);
+        } catch (SQLException ex) {
+            LOG.severe(String.format("Failed to prepare statement: %s. %s", query, ex));
+            throw new RuntimeException("Failed to prepare statement.", ex);
+        }
     }
 
 }

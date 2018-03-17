@@ -25,25 +25,32 @@ public class BlockedIpRepository {
             TABLE, COLUMN_DATE, COLUMN_IP, COLUMN_REASON);
 
     private static final PreparedStatement createDbStatement;
-    private static final PreparedStatement insertStatement;
+    private static final PreparedStatement insertBatchStatement;
 
     static {
-        createDbStatement = DbHelper.getPreparedStatement(CREATE_DB_SQL);
+        createDbStatement = DbHelper.prepareStatement(CREATE_DB_SQL);
         try {
             createDbStatement.execute();
         } catch (SQLException e) {
             e.printStackTrace(); // TODO everywhere
         }
 
-        insertStatement = DbHelper.getPreparedStatement(INSERT_SQL);
+        insertBatchStatement = DbHelper.prepareBatchStatement(INSERT_SQL);
     }
 
-    // TODO add batch
-    public static void add(String ip, BlockReason reason) {
+    public static void add(Batch<String> ips, BlockReason reason) {
         try {
-            insertStatement.setString(1, ip);
-            insertStatement.setString(2, reason.toString());
-            insertStatement.execute();
+            ips.getEntries().forEach(ip -> {
+                try {
+                    insertBatchStatement.setString(1, ip);
+                    insertBatchStatement.setString(2, reason.toString());
+                    insertBatchStatement.addBatch();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            });
+            insertBatchStatement.executeBatch();
+            insertBatchStatement.getConnection().commit();
         } catch (SQLException e) {
             e.printStackTrace();
         }

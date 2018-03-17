@@ -2,7 +2,7 @@ package com.ef.model;
 
 import java.time.LocalDateTime;
 
-public class LogEntry {
+public class LogEntry {  // TODO move?
 
     private LocalDateTime date;
     private String ip;
