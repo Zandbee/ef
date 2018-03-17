@@ -20,20 +20,7 @@ public final class DatabaseConfig {
         registerDriver();
     }
 
-    public static PreparedStatement getPreparedStatement(String query) { // TODO move to db utils?
-        Optional<Connection> conn = getConnection();
-        if (conn.isPresent()) {
-            try {
-                return conn.get().prepareStatement(query);
-            } catch (SQLException ex) {
-                LOG.severe(String.format("Failed to prepare statement: %s. %s", query, ex));
-                throw new RuntimeException("Failed to prepare statement.", ex); // TODO should fail, not just log
-            }
-        }
-        throw new RuntimeException("Failed to prepare statement.");
-    }
-
-    private static Optional<Connection> getConnection() {
+    public static Optional<Connection> getConnection() {
         try {
             Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); // TODO close resources
             LOG.info(String.format("Connecting to database: %s, username: %s.", DB_URL, USER));

@@ -1,7 +1,7 @@
 package com.ef.db;
 
-import com.ef.config.DatabaseConfig;
 import com.ef.model.LogEntry;
+import com.ef.util.BlockReason;
 import com.ef.util.Duration;
 
 import java.sql.PreparedStatement;
@@ -47,16 +47,16 @@ public final class RequestLogRepository {
     private static final PreparedStatement selectWithThresholdStatement;
 
     static {
-        createDbStatement = DatabaseConfig.getPreparedStatement(CREATE_DB_SQL);
+        createDbStatement = DbHelper.getPreparedStatement(CREATE_DB_SQL);
         try {
             createDbStatement.execute();
         } catch (SQLException e) {
             e.printStackTrace(); // TODO everywhere
         }
 
-        insertStatement = DatabaseConfig.getPreparedStatement(INSERT_SQL);
+        insertStatement = DbHelper.getPreparedStatement(INSERT_SQL);
 
-        selectWithThresholdStatement = DatabaseConfig.getPreparedStatement(SELECT_WITH_THRESHOLD_SQL);
+        selectWithThresholdStatement = DbHelper.getPreparedStatement(SELECT_WITH_THRESHOLD_SQL);
     }
 
     private RequestLogRepository() {
@@ -94,9 +94,12 @@ public final class RequestLogRepository {
             where date between '2017-01-01 15:00:00' and timestampadd(hour,1,'2017-01-01 15:00:00')
             group by ip having count(*) > 200").executeQuery()
              */
+            // TODO select + insert transaction
             ResultSet resultSet = selectWithThresholdStatement.executeQuery();
             while (resultSet.next()) {
-                result.add(resultSet.getString(COLUMN_IP));
+                String ip = resultSet.getString(COLUMN_IP);
+                result.add(ip);
+                BlockedIpRepository.add(ip, BlockReason.TOO_MANY_REQUESTS);
             }
         } catch (SQLException e) {
             e.printStackTrace();
