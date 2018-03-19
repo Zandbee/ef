@@ -41,7 +41,7 @@ public class Parser {
                 LOG.info("Loading data...");
                 LogReader logReader = new LogReader(is);
                 List<LogEntry> logEntries;
-                while ((logEntries = logReader.readNext()) != null) {
+                while ((logEntries = logReader.readNext(null)) != null) {
                     requestLogDao.add(logEntries);
                 }
             }

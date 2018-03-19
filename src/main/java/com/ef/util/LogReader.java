@@ -24,10 +24,13 @@ public class LogReader implements Closeable {
         this.reader = new BufferedReader(new InputStreamReader(inputStream));
     }
 
-    public List<LogEntry> readNext() throws Exception {
+    public List<LogEntry> readNext(Integer size) throws IOException {
+        if (size == null || size <= 0) {
+            size = BATCH_SIZE;
+        }
         List<LogEntry> batch = new ArrayList<>();
         String line;
-        while (batch.size() < BATCH_SIZE && (line = reader.readLine()) != null) {
+        while (batch.size() < size && (line = reader.readLine()) != null) {
             String[] parts = line.split(DELIMITER);
             if (parts.length == 5) {
                 Optional<LocalDateTime> date = DataUtil.getValidDate(trim(parts[0]), DATE_PATTERN);
