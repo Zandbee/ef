@@ -2,7 +2,7 @@ package com.ef;
 
 import com.ef.db.RequestLogDao;
 import com.ef.model.LogEntry;
-import com.ef.util.DataValidator;
+import com.ef.util.DataUtil;
 import com.ef.util.Duration;
 import com.ef.util.LogReader;
 
@@ -36,7 +36,7 @@ public class Parser {
         // If the --filePath arg is provided, the file is read and written into the db.
         // Otherwise, only select query is executed on the data already present in the db.
         String filePath = arguments.getPath();
-        if (DataValidator.isNotEmpty(filePath)) {
+        if (DataUtil.isNotEmpty(filePath)) {
             try (InputStream is = new FileInputStream(filePath)) {
                 LOG.info("Loading data...");
                 LogReader logReader = new LogReader(is);
@@ -69,9 +69,9 @@ public class Parser {
             if (dateString == null || durationString == null || thresholdString == null) {
                 throw new IllegalArgumentException("Invalid input arguments.");
             }
-            Optional<LocalDateTime> dateOpt = DataValidator.getValidDate(dateString, DATE_PATTERN);
+            Optional<LocalDateTime> dateOpt = DataUtil.getValidDate(dateString, DATE_PATTERN);
             Optional<Duration> durationOpt = Duration.valueOfIgnoreCase(durationString);
-            Optional<Integer> thresholdOpt = DataValidator.getInt(thresholdString);
+            Optional<Integer> thresholdOpt = DataUtil.getInt(thresholdString);
 
             if (!dateOpt.isPresent()) {
                 throw new IllegalArgumentException("Cannot parse start date arg. Expected 'yyyy-MM-dd.HH:mm:ss' format.");

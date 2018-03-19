@@ -30,13 +30,13 @@ public class LogReader implements Closeable {
         while (batch.size() < BATCH_SIZE && (line = reader.readLine()) != null) {
             String[] parts = line.split(DELIMITER);
             if (parts.length == 5) {
-                Optional<LocalDateTime> date = DataValidator.getValidDate(trim(parts[0]), DATE_PATTERN);
+                Optional<LocalDateTime> date = DataUtil.getValidDate(trim(parts[0]), DATE_PATTERN);
                 String ip = trim(parts[1]);
                 String requestMethod = trimWithQuotes(parts[2]);
-                Optional<Integer> statusCode = DataValidator.getInt(trim(parts[3]));
+                Optional<Integer> statusCode = DataUtil.getInt(trim(parts[3]));
                 String userAgent = trimWithQuotes(parts[4]);
-                if (date.isPresent() && statusCode.isPresent() && DataValidator.isValidIp(ip)
-                        && DataValidator.isNoneEmpty(requestMethod, userAgent)) {
+                if (date.isPresent() && statusCode.isPresent() && DataUtil.isValidIp(ip)
+                        && DataUtil.isNoneEmpty(requestMethod, userAgent)) {
                     batch.add(new LogEntry(date.get(), ip, requestMethod, statusCode.get(), userAgent));
                 }
             }

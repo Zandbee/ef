@@ -8,12 +8,12 @@ import java.time.format.DateTimeParseException;
 import java.util.Optional;
 import java.util.logging.Logger;
 
-public final class DataValidator {
+public final class DataUtil {
 
-    private static final Logger LOG = Logger.getLogger(DataValidator.class.getName());
+    private static final Logger LOG = Logger.getLogger(DataUtil.class.getName());
     private static final InetAddressValidator IP_VALIDATOR = InetAddressValidator.getInstance();
 
-    private DataValidator() {
+    private DataUtil() {
     }
 
     public static Optional<LocalDateTime> getValidDate(String dateString, String datePattern) {
