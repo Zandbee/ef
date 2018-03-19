@@ -63,7 +63,7 @@ public class RequestLogDao {
         String dateAsString = date.format(DateTimeFormatter.ofPattern(DATE_PATTERN));
         String interval = duration.getSqlIntervalName();
         final String selectWithThresholdSql = String.format(
-                "select %s, count(*) from %s where %s between ? and timestampadd(%s,1,?) group by %s having count(*) > ?;",
+                "select %s, count(*) from %s where %s between ? and timestampadd(%s, 1, ?) group by %s having count(*) > ?;",
                 COLUMN_IP, TABLE, COLUMN_DATE, interval, COLUMN_IP);
         Set<String> result = new HashSet<>();
         List<String> batch = new ArrayList<>();
