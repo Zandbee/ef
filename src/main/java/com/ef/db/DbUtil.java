@@ -7,8 +7,8 @@ import java.sql.SQLException;
 import java.util.logging.Logger;
 
 /**
- * Database parameters must be provided via system properties:
- * -DdbUrl, -DdbUser, -DdbPassword.
+ * Database parameters should be provided via system properties:
+ * -DdbUrl, -DdbUser, -DdbPassword. Otherwise, the defaults are used.
  */
 public final class DbUtil {
 
@@ -19,20 +19,23 @@ public final class DbUtil {
     private static final String ARG_PASSWORD = "dbPassword";
 
     private static final String JDBC_DRIVER = "com.mysql.cj.jdbc.Driver";
+    private static final String DB_URL = "jdbc:mysql://127.0.0.1:3306/access_log?serverTimezone=UTC&useSSL=false";
+    private static final String DB_USER = "root";
+    private static final String DB_PASSWORD = "";
 
     private DbUtil() {
         registerDriver();
     }
 
     public static Connection getConnection() {
-        String dbUrl = System.getProperty(ARG_DB_URL);
-        String user = System.getProperty(ARG_USER);
-        String pswd = System.getProperty(ARG_PASSWORD);
+        String dbUrl = System.getProperty(ARG_DB_URL, DB_URL);
+        String user = System.getProperty(ARG_USER, DB_USER);
+        String pswd = System.getProperty(ARG_PASSWORD, DB_PASSWORD);
         try {
             return DriverManager.getConnection(dbUrl, user, pswd);
         } catch (SQLException ex) {
             throw new RuntimeException(
-                    "MySQL connection params must be provided as system properties: -DdbUrl, -DdbUser, -DdbPassword", ex);
+                    "MySQL connection should be provided as system properties: -DdbUrl, -DdbUser, -DdbPassword", ex);
         }
     }
 
