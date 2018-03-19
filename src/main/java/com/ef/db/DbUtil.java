@@ -7,8 +7,8 @@ import java.sql.SQLException;
 import java.util.logging.Logger;
 
 /**
- * Database parameters can be provided via system properties:
- * -DdbUrl, -DdbUser, -DdbPassword. Otherwise, an embedded database is used.
+ * Database parameters must be provided via system properties:
+ * -DdbUrl, -DdbUser, -DdbPassword.
  */
 public final class DbUtil {
 
@@ -19,22 +19,20 @@ public final class DbUtil {
     private static final String ARG_PASSWORD = "dbPassword";
 
     private static final String JDBC_DRIVER = "com.mysql.cj.jdbc.Driver";
-    private static final String DB_URL = "jdbc:h2:mem:logs";
-    private static final String USER = "root";
-    private static final String PASSWORD = "password";
 
     private DbUtil() {
         registerDriver();
     }
 
     public static Connection getConnection() {
-        String dbUrl = System.getProperty(ARG_DB_URL, DB_URL);
-        String user = System.getProperty(ARG_USER, USER);
-        String pswd = System.getProperty(ARG_PASSWORD, PASSWORD);
+        String dbUrl = System.getProperty(ARG_DB_URL);
+        String user = System.getProperty(ARG_USER);
+        String pswd = System.getProperty(ARG_PASSWORD);
         try {
             return DriverManager.getConnection(dbUrl, user, pswd);
         } catch (SQLException ex) {
-            throw new RuntimeException(ex);
+            throw new RuntimeException(
+                    "MySQL connection params must be provided as system properties: -DdbUrl, -DdbUser, -DdbPassword", ex);
         }
     }
 

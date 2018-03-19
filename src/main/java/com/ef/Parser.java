@@ -23,7 +23,7 @@ public class Parser {
     private static final String ARG_START_DATE = "--startDate";
     private static final String ARG_DURATION = "--duration";
     private static final String ARG_THRESHOLD = "--threshold";
-    private static final String ARG_PATH = "--filePath";
+    private static final String ARG_PATH = "--accesslog";
     private static final int ARGS_NUM = 3;
 
     private static final String DATE_PATTERN = "yyyy-MM-dd.HH:mm:ss";
@@ -33,7 +33,7 @@ public class Parser {
         RequestLogDao requestLogDao = new RequestLogDao();
 
         Arguments arguments = readArgs(args);
-        // If the --filePath arg is provided, the file is read and written into the db.
+        // If the --accesslog arg is provided, the file is read and loaded to the db.
         // Otherwise, only select query is executed on the data already present in the db.
         String filePath = arguments.getPath();
         if (DataUtil.isNotEmpty(filePath)) {
