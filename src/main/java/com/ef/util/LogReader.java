@@ -1,54 +1,50 @@
 package com.ef.util;
 
-import com.ef.db.Batch;
-import com.ef.db.RequestLogRepository;
 import com.ef.model.LogEntry;
 
+import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
-import java.util.logging.Logger;
-import java.util.stream.Stream;
 
-public final class LogReader { // TODO move
+public class LogReader implements Closeable {
 
-    private static final Logger LOG = Logger.getLogger(LogReader.class.getName());
+    private static final String DATE_PATTERN = "yyyy-MM-dd HH:mm:ss.SSS";
     private static final String DELIMITER = "\\|";
     private static final int BATCH_SIZE = 900;
 
-    private LogReader() {
+    private BufferedReader reader;
+
+    public LogReader(InputStream inputStream) {
+        this.reader = new BufferedReader(new InputStreamReader(inputStream));
     }
 
-    public static void readFileFromResources(String fileName) {
-        Batch<LogEntry> batch = new Batch<>();
-        try (Stream<String> lines = Files.lines( // TODO: substitute with a fileName or extract to const
-                Paths.get(ClassLoader.getSystemResource("access.log").toURI()))) {
-            lines.forEach(line -> {
-                String[] parts = line.split(DELIMITER);
-                if (parts.length == 5) {
-                    Optional<LocalDateTime> date = DataValidator.getValidDate(trim(parts[0]));
-                    String ip = trim(parts[1]);
-                    String requestMethod = trimWithQuotes(parts[2]);
-                    Optional<Integer> statusCode = DataValidator.getInt(trim(parts[3]));
-                    String userAgent = trimWithQuotes(parts[4]);
-                    if (date.isPresent() && statusCode.isPresent() && DataValidator.isValidIp(ip)
-                            && DataValidator.isValidStringAll(requestMethod, userAgent)) {
-                        batch.add(new LogEntry(date.get(), ip, requestMethod, statusCode.get(), userAgent));
-                        if (batch.size() >= BATCH_SIZE) {
-                            RequestLogRepository.add(batch);
-                            batch.clear();
-                        }
-                    }
+    public List<LogEntry> readNext() throws Exception {
+        List<LogEntry> batch = new ArrayList<>();
+        String line;
+        while (batch.size() < BATCH_SIZE && (line = reader.readLine()) != null) {
+            String[] parts = line.split(DELIMITER);
+            if (parts.length == 5) {
+                Optional<LocalDateTime> date = DataValidator.getValidDate(trim(parts[0]), DATE_PATTERN);
+                String ip = trim(parts[1]);
+                String requestMethod = trimWithQuotes(parts[2]);
+                Optional<Integer> statusCode = DataValidator.getInt(trim(parts[3]));
+                String userAgent = trimWithQuotes(parts[4]);
+                if (date.isPresent() && statusCode.isPresent() && DataValidator.isValidIp(ip)
+                        && DataValidator.isNoneEmpty(requestMethod, userAgent)) {
+                    batch.add(new LogEntry(date.get(), ip, requestMethod, statusCode.get(), userAgent));
                 }
-            });
-            RequestLogRepository.add(batch);
-        } catch (IOException | URISyntaxException ex) {
-            LOG.severe(String.format("Cannot read file [%s]: %s", fileName, ex));
-        } catch (SecurityException ex) { // TODO: need this?
-            LOG.severe(String.format("Access denied to file [%s]: %s", fileName, ex));
+            }
+        }
+        if (batch.isEmpty()) {
+            return null;
+        } else {
+            return batch;
         }
     }
 
@@ -58,6 +54,11 @@ public final class LogReader { // TODO move
 
     private static String trimWithQuotes(String string) {
         return string.trim().replaceAll("^\"|\"$", "");
+    }
+
+    @Override
+    public void close() throws IOException {
+        reader.close();
     }
 
 }

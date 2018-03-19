@@ -11,14 +11,13 @@ import java.util.logging.Logger;
 public final class DataValidator {
 
     private static final Logger LOG = Logger.getLogger(DataValidator.class.getName());
-    private static final String DATE_PATTERN = "yyyy-MM-dd HH:mm:ss.SSS";
     private static final InetAddressValidator IP_VALIDATOR = InetAddressValidator.getInstance();
 
     private DataValidator() {
     }
 
-    public static Optional<LocalDateTime> getValidDate(String dateString) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_PATTERN);
+    public static Optional<LocalDateTime> getValidDate(String dateString, String datePattern) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(datePattern);
         try {
             return Optional.of(LocalDateTime.parse(dateString, formatter));
         } catch (DateTimeParseException ex) {
@@ -40,14 +39,15 @@ public final class DataValidator {
         }
     }
 
-    public static boolean isValidString(String string) {
+    public static boolean isNotEmpty(String string) {
         return string != null && !string.isEmpty();
     }
 
-    public static boolean isValidStringAll(String... strings) {
+    public static boolean isNoneEmpty(String... strings) {
         for (String string : strings) {
-            if (!isValidString(string)) return false;
+            if (!isNotEmpty(string)) return false;
         }
         return true;
     }
+
 }
