@@ -11,6 +11,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -40,7 +41,7 @@ public class RequestLogDao {
                 conn.setAutoCommit(false);
                 try (PreparedStatement insertBatchStatement = DbUtil.prepareStatement(conn, INSERT_SQL)) {
                     for (LogEntry entry : entries) {
-                        insertBatchStatement.setTimestamp(1, Timestamp.valueOf(entry.getDate()));
+                        insertBatchStatement.setTimestamp(1, Timestamp.valueOf(entry.getDate()), Calendar.getInstance());
                         insertBatchStatement.setString(2, entry.getIp());
                         insertBatchStatement.setString(3, entry.getRequestMethod());
                         insertBatchStatement.setInt(4, entry.getStatusCode());
